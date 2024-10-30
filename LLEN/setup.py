@@ -151,12 +151,7 @@ if __name__ == '__main__':
     setup(
         name='basicsr',
         version=get_version(),
-        description='Open Source Image and Video Super-Resolution Toolbox',
         long_description=readme(),
-        author='Xintao Wang',
-        author_email='xintao.wang@outlook.com',
-        keywords='computer vision, restoration, super resolution',
-        url='https://github.com/xinntao/BasicSR',
         packages=find_packages(
             exclude=('options', 'datasets', 'experiments', 'results',
                      'tb_logger', 'wandb')),

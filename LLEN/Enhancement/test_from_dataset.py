@@ -202,8 +202,6 @@ if dataset in ['SID', 'SMID', 'SDSD_indoor', 'SDSD_outdoor']:
             # 计算并记录性能指标。
             # 如果设置了基于平均灰度值的调整。
             if args.GT_mean:
-                # This test setting is the same as KinD, LLFlow, and recent diffusion models
-                # Please refer to Line 73 (https://github.com/zhangyhuaee/KinD/blob/master/evaluate_LOLdataset.py)
                 mean_restored = cv2.cvtColor(restored.astype(np.float32), cv2.COLOR_BGR2GRAY).mean()
                 mean_target = cv2.cvtColor(target.astype(np.float32), cv2.COLOR_BGR2GRAY).mean()
                 restored = np.clip(restored * (mean_target / mean_restored), 0, 1)
@@ -280,8 +278,6 @@ else:
             ).detach().permute(0, 2, 3, 1).squeeze(0).numpy()
 
             if args.GT_mean:
-                # This test setting is the same as KinD, LLFlow, and recent diffusion models
-                # Please refer to Line 73 (https://github.com/zhangyhuaee/KinD/blob/master/evaluate_LOLdataset.py)
                 mean_restored = cv2.cvtColor(restored.astype(np.float32), cv2.COLOR_BGR2GRAY).mean()
                 mean_target = cv2.cvtColor(target.astype(np.float32), cv2.COLOR_BGR2GRAY).mean()
                 restored = np.clip(restored * (mean_target / mean_restored), 0, 1)

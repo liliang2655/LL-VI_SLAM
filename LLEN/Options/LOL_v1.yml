@@ -32,7 +32,7 @@ datasets:
 
     ### Training on single fixed-patch size 128x128-固定大小的训练最适合更受控制的环境或计算资源有限的情况
     mini_batch_sizes: [8]   
-    iters: [3000]  #300000
+    iters: [30000]
     gt_size: 128   
     gt_sizes: [128]
     ### ------------------------------------------------------------
@@ -43,8 +43,8 @@ datasets:
   val:
     name: ValSet
     type: Dataset_PairedImage
-    dataroot_gt: data/LOLv1/Test/2048_1536
-    dataroot_lq: data/LOLv1/Test/2048_1536
+    dataroot_gt: data/LOLv1/Test/target
+    dataroot_lq: data/LOLv1/Test/input
     io_backend:
       type: disk
 
@@ -55,7 +55,7 @@ network_g:
   out_channels: 3
   n_feat: 40
   stage: 1
-  num_blocks: [1,2,2] #[1,2,2]
+  num_blocks: [2,2,2]
 
 
 # path
@@ -66,7 +66,7 @@ path:
 
 # training settings**`total_iter` 通常是指训练过程将在所有批次和时期运行的迭代总数。 它代表从开始到结束的总训练长度。
 train:
-  total_iter: 1500 #150000
+  total_iter: 15000
   warmup_iter: -1 # no warm up
   use_grad_clip: true
 
@@ -75,7 +75,7 @@ train:
   # 2nd cycle: cosine annealing (3e-4 to 1e-6) for 208k iters.
   scheduler:
     type: CosineAnnealingRestartCyclicLR
-    periods: [460, 1040] #[46000, 104000]
+    periods: [4600, 10400]
     restart_weights: [1,1]
     eta_mins: [0.0003,0.000001]   
   
@@ -99,7 +99,7 @@ train:
 # validation settings
 val:
   window_size: 4
-  val_freq: !!float 1e1 #1e3
+  val_freq: !!float 1e2
   save_img: false
   rgb2bgr: true
   use_image: false
@@ -113,8 +113,8 @@ val:
 
 # logging settings
 logger:
-  print_freq: 50 #500
-  save_checkpoint_freq: !!float 1e1 #1e3
+  print_freq: 500
+  save_checkpoint_freq: !!float 1e2
   use_tb_logger: true
   wandb:
     project: low_light

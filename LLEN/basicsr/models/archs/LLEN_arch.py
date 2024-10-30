@@ -83,9 +83,9 @@ def shift_back(inputs, step=2):
             inputs[:, i, :, int(step * i):int(step * i) + out_col]
     return inputs[:, :, :, :out_col]
 
-class Illumination_Estimator(nn.Module):
+class Enhancer(nn.Module):
     def __init__(self, n_fea_middle, n_fea_in=4, n_fea_out=3):
-        super(Illumination_Estimator, self).__init__()
+        super(Enhancer, self).__init__()
 
         self.conv1 = nn.Conv2d(n_fea_in, n_fea_middle, kernel_size=1, bias=True)
         self.depth_conv1 = nn.Conv2d(n_fea_middle, n_fea_middle, kernel_size=5, padding=2, bias=True, groups=n_fea_middle)
@@ -105,7 +105,7 @@ class Illumination_Estimator(nn.Module):
         illu_fea = self.concat_conv(concat_output)
         return illu_fea, illu_map
 
-class IG_MSA(nn.Module):
+class MSA(nn.Module):
     def __init__(self, dim, dim_head=64, heads=8):
         super().__init__()
         self.norm = nn.LayerNorm(dim)
@@ -167,14 +167,14 @@ class FeedForward(nn.Module):
         out = self.net(x.permute(0, 3, 1, 2).contiguous())
         return out.permute(0, 2, 3, 1)
 
-class IGAB(nn.Module):
+class IASB(nn.Module):
     def __init__(self, dim, dim_head=64, heads=8, num_blocks=2):
         super().__init__()
         self.blocks = nn.ModuleList([])
         for _ in range(num_blocks):
             self.blocks.append(
                 nn.ModuleList([
-                    IG_MSA(dim=dim, dim_head=dim_head, heads=heads),
+                    MSA(dim=dim, dim_head=dim_head, heads=heads),
                     PreNorm(dim, FeedForward(dim=dim))
                 ]))
     def forward(self, x, illu_fea):
@@ -201,14 +201,14 @@ class Denoiser(nn.Module):
         dim_level = dim
         for i in range(level):
             self.encoder_layers.append(nn.ModuleList([
-                IGAB(dim=dim_level, num_blocks=num_blocks[i], dim_head=dim, heads=dim_level // dim),
+                IASB(dim=dim_level, num_blocks=num_blocks[i], dim_head=dim, heads=dim_level // dim),
                 nn.Conv2d(dim_level, dim_level * 2, 4, 2, 1, bias=False),
                 nn.Conv2d(dim_level, dim_level * 2, 4, 2, 1, bias=False)
             ]))
             dim_level *= 2
 
         # Bottleneck
-        self.bottleneck = IGAB(
+        self.bottleneck = IASB(
             dim=dim_level, dim_head=dim, heads=dim_level // dim, num_blocks=num_blocks[-1])
 
         # Decoder
@@ -217,7 +217,7 @@ class Denoiser(nn.Module):
             self.decoder_layers.append(nn.ModuleList([
                 nn.ConvTranspose2d(dim_level, dim_level // 2, stride=2, kernel_size=2, padding=0, output_padding=0),
                 nn.Conv2d(dim_level, dim_level // 2, 1, 1, bias=False),
-                IGAB(dim=dim_level // 2, num_blocks=num_blocks[level - 1 - i], dim_head=dim, heads=(dim_level // 2) // dim),
+                IASB(dim=dim_level // 2, num_blocks=num_blocks[level - 1 - i], dim_head=dim, heads=(dim_level // 2) // dim),
             ]))
             dim_level //= 2
 
@@ -244,8 +244,8 @@ class Denoiser(nn.Module):
         # Encoder
         fea_encoder = []
         illu_fea_list = []
-        for (IGAB, FeaDownSample, IlluFeaDownsample) in self.encoder_layers:
-            fea = IGAB(fea,illu_fea)  # bchw
+        for (IASB, FeaDownSample, IlluFeaDownsample) in self.encoder_layers:
+            fea = IASB(fea,illu_fea)  # bchw
             illu_fea_list.append(illu_fea)
             fea_encoder.append(fea)
             fea = FeaDownSample(fea)
@@ -269,7 +269,7 @@ class Denoiser(nn.Module):
 class LLEN_Single_Stage(nn.Module):
     def __init__(self, in_channels=3, out_channels=3, n_feat=31, level=2, num_blocks=[1, 1, 1]):
         super(LLEN_Single_Stage, self).__init__()
-        self.estimator = Illumination_Estimator(n_feat)
+        self.estimator = Enhancer(n_feat)
         self.denoiser = Denoiser(in_dim=in_channels,out_dim=out_channels,dim=n_feat,level=level,num_blocks=num_blocks)  #### 将 Denoiser 改为 img2img
     
     def forward(self, img):
