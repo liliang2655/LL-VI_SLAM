@@ -297,14 +297,3 @@ class LLEN(nn.Module):
         out = self.body(x)
 
         return out
-
-
-# if __name__ == '__main__':
-#     from fvcore.nn import FlopCountAnalysis
-#     model = LLEN(stage=1,n_feat=40,num_blocks=[1,2,2]).cuda()
-#     print(model)
-#     inputs = torch.randn((1, 3, 256, 256)).cuda()
-#     flops = FlopCountAnalysis(model,inputs)
-#     n_param = sum([p.nelement() for p in model.parameters()])  # 所有参数数量
-#     print(f'GMac:{flops.total()/(1024*1024*1024)}')
-#     print(f'Params:{n_param}')
